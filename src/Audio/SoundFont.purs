@@ -123,13 +123,13 @@ loadInstrument maybeLocalDir instrumentName = do
   res <- request $ defaultRequest
     { url = url, method = Left GET, responseFormat = ResponseFormat.string }
 
-  case res.body of
+  case res of
     Left err -> do
       _ <- liftEffect $ log $ "instrument failed to load: " <> url
       pure (Tuple instrumentName empty)
-    Right body -> do
+    Right result -> do
       let
-        ejson = midiJsToNoteMap instrumentName body
+        ejson = midiJsToNoteMap instrumentName result.body
         noteMap = either (\_ -> empty) identity ejson
       font <- traverse decodeAudioBuffer noteMap
       pure (Tuple instrumentName font)
@@ -210,12 +210,12 @@ logLoadResource instrument =
       res <- request $ defaultRequest
                { url = url, method = Left GET, responseFormat = ResponseFormat.string }
 
-      case res.body of
+      case res of
         Left err ->
           liftEffect $ log $ "instrument failed to load: " <> url
-        Right body -> do
+        Right result -> do
           let
-            ejson = midiJsToNoteMap instrument body
+            ejson = midiJsToNoteMap instrument result.body
           liftEffect $ log $ "extract JSON: " <> (either show (debugNoteIds) ejson)
 
 
